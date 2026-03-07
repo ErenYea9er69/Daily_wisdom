@@ -27,13 +27,14 @@ export type ChatMessage = {
 interface AppState {
   hasCompletedOnboarding: boolean;
   apiKey: string | null;
+  apiProvider: 'gemini' | 'longcat';
   userProfile: UserProfile | null;
   lessons: Lesson[];
   chatHistory: ChatMessage[];
   streakCalendar: string[]; // Array of YYYY-MM-DD dates completed
   
   // Actions
-  setApiKey: (key: string) => void;
+  setApiKey: (key: string, provider: 'gemini' | 'longcat') => void;
   setProfile: (profile: UserProfile) => void;
   completeOnboarding: () => void;
   addLesson: (lesson: Lesson) => void;
@@ -48,12 +49,13 @@ export const useStore = create<AppState>()(
     (set) => ({
       hasCompletedOnboarding: false,
       apiKey: null,
+      apiProvider: 'gemini',
       userProfile: null,
       lessons: [],
       chatHistory: [],
       streakCalendar: [],
 
-      setApiKey: (key) => set({ apiKey: key }),
+      setApiKey: (key, provider) => set({ apiKey: key, apiProvider: provider }),
       setProfile: (profile) => set({ userProfile: profile }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
       

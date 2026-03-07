@@ -1,8 +1,11 @@
-import { UserProfile, Lesson, ChatMessage } from '../store/useStore';
+import { UserProfile, Lesson, ChatMessage, useStore } from '../store/useStore';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const LONGCAT_API_URL = 'https://api.longcat.chat/v1/chat/completions';
 
 export const generateDailyLesson = async (apiKey: string, profile: UserProfile): Promise<Omit<Lesson, 'id' | 'date'>> => {
+  const provider = useStore.getState().apiProvider;
+  
   const prompt = `
     You are a premium, highly intellectual mentor.
     User Profile:
@@ -17,6 +20,36 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
     Return pure JSON with exactly these two keys: "title" (a bold, catchy title), and "content" (the lesson text, formatting with line breaks if needed). Do not wrap in markdown loops, just raw valid JSON.
   `;
 
+  if (provider === 'longcat') {
+    const response = await fetch(LONGCAT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'longcat-flash-chat',
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: 'system',
+            content: 'You output pure JSON.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch from LongCat');
+    const data = await response.json();
+    const rawJson = data.choices[0].message.content;
+    return JSON.parse(rawJson);
+  }
+
+  // GEMINI FALLBACK
   const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,13 +71,42 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
 };
 
 export const chatWithMentor = async (apiKey: string, profile: UserProfile, history: ChatMessage[], newMessage: string): Promise<string> => {
+  const provider = useStore.getState().apiProvider;
+
   const systemPrompt = `
     You are the user's personal mentor. 
     Their name is ${profile.name}, they admire ${profile.admires}, and their current focus is ${profile.focus} related to ${profile.struggle}.
     Respond as the mentor in less than 100 words. Keep it conversational.
   `;
 
-  // Format history for Gemini
+  if (provider === 'longcat') {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      })),
+      { role: 'user', content: newMessage }
+    ];
+
+    const response = await fetch(LONGCAT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'longcat-flash-chat',
+        messages: messages
+      })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch chat from LongCat');
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // GEMINI FALLBACK
   const formattedHistory = history.map(msg => ({
     role: msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }]
