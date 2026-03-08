@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist, StorageValue } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type UserProfile = {
@@ -44,6 +44,19 @@ interface AppState {
   resetAll: () => void;
 }
 
+const customStorage = {
+  getItem: async (name: string): Promise<StorageValue<AppState> | null> => {
+    const value = await AsyncStorage.getItem(name);
+    return value ? JSON.parse(value) : null;
+  },
+  setItem: async (name: string, value: StorageValue<AppState>): Promise<void> => {
+    await AsyncStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await AsyncStorage.removeItem(name);
+  },
+};
+
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
@@ -78,6 +91,7 @@ export const useStore = create<AppState>()(
       resetAll: () => set({
         hasCompletedOnboarding: false,
         apiKey: null,
+        apiProvider: 'gemini',
         userProfile: null,
         lessons: [],
         chatHistory: [],
@@ -86,7 +100,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'mentor-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: customStorage,
     }
   )
 );
