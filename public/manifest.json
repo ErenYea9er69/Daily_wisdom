@@ -1,0 +1,9 @@
+{
+    "name": "Daily Mentor AI",
+    "short_name": "Mentor AI",
+    "description": "Premium Local-First AI Mentor",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000"
+}

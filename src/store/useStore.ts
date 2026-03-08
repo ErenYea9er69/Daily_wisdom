@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { persist, StorageValue } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type UserProfile = {
   name: string;
@@ -42,20 +41,9 @@ interface AppState {
   addChatMessage: (msg: ChatMessage) => void;
   clearChatHistory: () => void;
   resetAll: () => void;
+  isHydrated: boolean;
+  setHydrated: () => void;
 }
-
-const customStorage = {
-  getItem: async (name: string): Promise<StorageValue<AppState> | null> => {
-    const value = await AsyncStorage.getItem(name);
-    return value ? JSON.parse(value) : null;
-  },
-  setItem: async (name: string, value: StorageValue<AppState>): Promise<void> => {
-    await AsyncStorage.setItem(name, JSON.stringify(value));
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await AsyncStorage.removeItem(name);
-  },
-};
 
 export const useStore = create<AppState>()(
   persist(
@@ -67,7 +55,9 @@ export const useStore = create<AppState>()(
       lessons: [],
       chatHistory: [],
       streakCalendar: [],
+      isHydrated: false,
 
+      setHydrated: () => set({ isHydrated: true }),
       setApiKey: (key, provider) => set({ apiKey: key, apiProvider: provider }),
       setProfile: (profile) => set({ userProfile: profile }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
@@ -99,8 +89,11 @@ export const useStore = create<AppState>()(
       }),
     }),
     {
-      name: 'mentor-storage',
-      storage: customStorage,
+      name: 'mentor-storage-v2',
+      // skip hydration during SSR to avoid hydration errors
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
+      },
     }
   )
 );
