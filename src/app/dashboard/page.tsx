@@ -23,7 +23,7 @@ export default function Dashboard() {
 
         const loadLesson = async () => {
             const today = new Date().toISOString().split('T')[0];
-            const existingLesson = lessons.find(l => l.date === today);
+            const existingLesson = lessons.find(l => l.date === today && l.quote);
 
             if (existingLesson) {
                 setTodayLesson(existingLesson);
@@ -122,9 +122,16 @@ export default function Dashboard() {
                             </blockquote>
                         )}
 
+                        {/* Fallback for legacy cached unstructured lessons */}
+                        {!(todayLesson as any)?.quote && (todayLesson as any)?.title && (
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter leading-[1.1] mb-8 bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-200 to-zinc-600">
+                                {(todayLesson as any).title}
+                            </h2>
+                        )}
+
                         <div className="prose prose-invert max-w-none relative z-10 flex-grow mb-8">
                             <p className="text-base sm:text-lg text-zinc-300 leading-relaxed font-light whitespace-pre-wrap">
-                                {todayLesson?.insight}
+                                {todayLesson?.insight || (todayLesson as any)?.content}
                             </p>
                         </div>
 
