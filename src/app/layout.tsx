@@ -7,7 +7,10 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Daily Mentor AI',
   description: 'Your premium, privacy-focused daily growth companion.',
-  manifest: '/manifest.json',
+  manifest: '/manifest.json'
+};
+
+export const viewport = {
   themeColor: '#000000'
 };
 

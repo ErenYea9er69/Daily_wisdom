@@ -8,7 +8,6 @@ export function SettingsModal() {
     const [isOpen, setIsOpen] = useState(false);
     const { apiKey, apiProvider, setApiKey } = useStore();
 
-    const [draftKey, setDraftKey] = useState(apiKey || '');
     const [draftProvider, setDraftProvider] = useState<'gemini' | 'longcat'>(apiProvider || 'gemini');
 
     // Handle escape key to close
@@ -25,13 +24,13 @@ export function SettingsModal() {
     // Sync draft states when opened
     useEffect(() => {
         if (isOpen) {
-            setDraftKey(apiKey || '');
             setDraftProvider(apiProvider || 'gemini');
         }
-    }, [isOpen, apiKey, apiProvider]);
+    }, [isOpen, apiProvider]);
 
     const handleSave = () => {
-        setApiKey(draftKey, draftProvider);
+        // Automatically consider key as configured due to backend injection
+        setApiKey('auto-configured', draftProvider);
         setIsOpen(false);
     };
 
@@ -95,21 +94,11 @@ export function SettingsModal() {
                                         <Key size={16} />
                                         API Key
                                     </label>
-                                    <a
-                                        href={draftProvider === 'gemini' ? 'https://aistudio.google.com/app/apikey' : 'https://longcat.chat/'}
-                                        target="_blank" rel="noreferrer"
-                                        className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-4"
-                                    >
-                                        Get Key
-                                    </a>
                                 </div>
-                                <input
-                                    type="password"
-                                    value={draftKey}
-                                    onChange={(e) => setDraftKey(e.target.value)}
-                                    placeholder={`Paste ${draftProvider === 'gemini' ? 'Gemini' : 'LongCat'} key here...`}
-                                    className="w-full bg-black/40 border border-white/5 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder:text-zinc-600"
-                                />
+                                <div className="w-full bg-black/40 border border-white/5 rounded-xl p-4 text-emerald-400/80 text-sm flex items-center gap-3 shadow-inner">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+                                    Securely connected via Environment Variables
+                                </div>
                             </div>
 
                             <button

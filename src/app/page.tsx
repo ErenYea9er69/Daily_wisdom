@@ -12,8 +12,6 @@ export default function Home() {
 
   const [step, setStep] = useState(0);
   const [profileDraft, setProfileDraft] = useState<Partial<UserProfile>>({});
-  const [keyInput, setKeyInput] = useState('');
-  const [provider, setProviderInput] = useState<'gemini' | 'longcat'>('gemini');
   const [startedQuiz, setStartedQuiz] = useState(false);
 
   useEffect(() => {
@@ -21,10 +19,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (mounted && hasCompletedOnboarding && apiKey) {
+    if (mounted && hasCompletedOnboarding) {
       router.push('/dashboard');
     }
-  }, [mounted, hasCompletedOnboarding, apiKey, router]);
+  }, [mounted, hasCompletedOnboarding, router]);
 
   if (!mounted) return null; // Avoid hydration mismatch
 
@@ -48,30 +46,24 @@ export default function Home() {
         { label: 'Deep philosophical concepts.', value: 'philosophy' },
       ]
     },
-    { title: 'Lastly, who is a thinker you admire?', subtitle: 'This helps me shape your mentor.', type: 'input', field: 'admires', placeholder: 'E.g., Marcus Aurelius, Buddha, Tesla' },
-    { title: 'Connect Your Engine', type: 'api-setup' }
+    { title: 'Lastly, who is a thinker you admire?', subtitle: 'This helps me shape your mentor.', type: 'input', field: 'admires', placeholder: 'E.g., Marcus Aurelius, Buddha, Tesla' }
   ];
 
   const currentQ = questions[step];
 
   const handleNext = () => {
-    if (step < questions.length - 2) {
+    if (step < questions.length - 1) {
       setStep(step + 1);
-    } else if (step === questions.length - 2) {
+    } else if (step === questions.length - 1) {
       setProfile({
         name: profileDraft.name || 'Friend',
         focus: profileDraft.focus as any || 'philosophy',
         struggle: profileDraft.struggle || 'General growth',
         admires: profileDraft.admires || 'Marcus Aurelius',
       });
+      // We also auto-set longcat as the default provider in the store
+      useStore.getState().setApiKey('auto-configured', 'longcat');
       completeOnboarding();
-      setStep(step + 1);
-    }
-  };
-
-  const handleFinish = () => {
-    if (keyInput.trim().length > 10) {
-      setApiKey(keyInput.trim(), provider);
       router.push('/dashboard');
     }
   };
@@ -143,61 +135,15 @@ export default function Home() {
                   })}
                 </div>
               )}
-
-              {currentQ.type === 'api-setup' && (
-                <div className="flex flex-col gap-6">
-                  <p className="text-center text-zinc-400 text-sm mb-2">
-                    This app runs 100% locally. Select an AI engine and provide an API key.
-                  </p>
-
-                  <div className="flex p-1 bg-black/40 rounded-xl border border-white/5 shadow-inner">
-                    <button
-                      onClick={() => setProviderInput('gemini')}
-                      className={`flex-1 py-2 text-sm rounded-lg transition-all duration-300 ${provider === 'gemini' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >Gemini</button>
-                    <button
-                      onClick={() => setProviderInput('longcat')}
-                      className={`flex-1 py-2 text-sm rounded-lg transition-all duration-300 ${provider === 'longcat' ? 'bg-zinc-800 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >LongCat</button>
-                  </div>
-
-                  <a
-                    href={provider === 'gemini' ? 'https://aistudio.google.com/app/apikey' : 'https://longcat.chat/'}
-                    target="_blank" rel="noreferrer"
-                    className="text-center text-blue-400 hover:text-blue-300 text-sm underline underline-offset-4"
-                  >
-                    Get a free {provider === 'gemini' ? 'Gemini' : 'LongCat'} key here
-                  </a>
-
-                  <input
-                    type="password"
-                    className="w-full bg-black/40 border border-white/5 shadow-inner rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder:text-zinc-600"
-                    placeholder={`Paste ${provider} API Key...`}
-                    value={keyInput}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleFinish()}
-                  />
-                </div>
-              )}
             </div>
 
-            {currentQ.type !== 'api-setup' ? (
-              <button
-                onClick={handleNext}
-                disabled={!(profileDraft as any)[currentQ.field!] && currentQ.field !== 'admires'}
-                className="mt-4 w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-30 transition-all hover:bg-zinc-200"
-              >
-                {step === questions.length - 2 ? 'Customize Engine' : 'Next'}
-              </button>
-            ) : (
-              <button
-                onClick={handleFinish}
-                disabled={keyInput.length < 10}
-                className="mt-4 w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-30 transition-all hover:bg-zinc-200 shadow-lg"
-              >
-                Start Journey
-              </button>
-            )}
+            <button
+              onClick={handleNext}
+              disabled={!(profileDraft as any)[currentQ.field!] && currentQ.field !== 'admires'}
+              className="mt-4 w-full bg-white text-black font-bold py-4 rounded-xl disabled:opacity-30 transition-all hover:bg-zinc-200"
+            >
+              {step === questions.length - 1 ? 'Start Journey' : 'Next'}
+            </button>
           </>
         )}
       </div>
