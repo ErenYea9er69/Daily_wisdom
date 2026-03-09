@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { url, headers, body } = await request.json();
+    let { url, headers, body } = await request.json();
 
     // Basic security check to only allow our known API endpoints
     if (url.startsWith('https://api.longcat.chat/')) {
         headers['Authorization'] = `Bearer ${process.env.LONGCAT_API_KEY}`;
     } else if (url.startsWith('https://generativelanguage.googleapis.com/')) {
-        // Safe to pass through if we use the client key, or we can override it if we had a GEMINI_API_KEY
+        if (process.env.GEMINI_API_KEY) {
+            // Optional: inject from server side if available, or just passthrough
+            url = url.replace(/key=[^&]*/, `key=${process.env.GEMINI_API_KEY}`);
+        }
     } else {
         return NextResponse.json({ error: 'Unauthorized URL' }, { status: 403 });
     }

@@ -1,7 +1,7 @@
 import { UserProfile, Lesson, ChatMessage, useStore } from '../store/useStore';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-const LONGCAT_API_URL = 'https://api.longcat.chat/v1/chat/completions';
+const LONGCAT_API_URL = 'https://api.longcat.chat/openai/v1/chat/completions';
 
 const proxyFetch = async (url: string, headers: Record<string, string>, body: any) => {
   return await fetch('/api/proxy', {
