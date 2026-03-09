@@ -71,27 +71,37 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-black text-white selection:bg-white/20 flex flex-col items-center">
+        <div className="min-h-screen relative overflow-hidden bg-black text-white selection:bg-white/20 flex flex-col items-center">
+            {/* Ambient Background Blur for Dashboard */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 blur-[120px] rounded-full pointer-events-none" />
+
             <NavigationBar />
 
-            <main className="flex-1 w-full max-w-2xl px-6 py-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="mb-12">
-                    <p className="text-zinc-500 uppercase tracking-widest text-xs font-bold mb-4 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <main className="flex-1 w-full max-w-3xl px-6 pt-32 pb-12 animate-in fade-in slide-in-from-bottom-8 duration-700 relative z-10">
+                <div className="mb-12 bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2rem] p-8 md:p-12 shadow-2xl hover:border-white/10 transition-colors duration-700 relative overflow-hidden group">
+                    {/* Hover internal glow */}
+                    <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+
+                    <p className="text-zinc-500 uppercase tracking-widest text-xs font-bold mb-6 flex items-center gap-3">
+                        <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></span>
+                        </span>
                         Daily Transmission
                     </p>
-                    <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-tight mb-8">
+
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tighter leading-[1.1] mb-8 bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-300 to-zinc-600">
                         {todayLesson?.title}
                     </h1>
 
-                    <div className="prose prose-invert max-w-none">
+                    <div className="prose prose-invert max-w-none relative z-10">
                         <p className="text-lg md:text-xl text-zinc-300 leading-relaxed font-light whitespace-pre-wrap">
                             {todayLesson?.content}
                         </p>
                     </div>
                 </div>
 
-                <div className="mt-16 pt-8 border-t border-zinc-900 flex justify-between items-center text-sm text-zinc-600">
+                <div className="px-6 border-t border-white/5 flex justify-between items-center text-sm text-zinc-600 font-medium">
                     <p>End of transmission.</p>
                     <p>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                 </div>
