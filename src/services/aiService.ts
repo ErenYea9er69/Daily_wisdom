@@ -3,6 +3,16 @@ import { UserProfile, Lesson, ChatMessage, useStore } from '../store/useStore';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 const LONGCAT_API_URL = 'https://api.longcat.chat/v1/chat/completions';
 
+const proxyFetch = async (url: string, headers: Record<string, string>, body: any) => {
+  return await fetch('/api/proxy', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url, headers, body })
+  });
+};
+
 export const generateDailyLesson = async (apiKey: string, profile: UserProfile): Promise<Omit<Lesson, 'id' | 'date'>> => {
   const provider = useStore.getState().apiProvider;
   
@@ -21,13 +31,10 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
   `;
 
   if (provider === 'longcat') {
-    const response = await fetch(LONGCAT_API_URL, {
-      method: 'POST',
-      headers: {
+    const response = await proxyFetch(LONGCAT_API_URL, {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
+      }, {
         model: 'longcat-flash-chat',
         response_format: { type: "json_object" },
         messages: [
@@ -40,8 +47,7 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
             content: prompt
           }
         ]
-      })
-    });
+      });
 
     if (!response.ok) throw new Error('Failed to fetch from LongCat');
     const data = await response.json();
@@ -50,16 +56,14 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
   }
 
   // GEMINI FALLBACK
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const response = await proxyFetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      'Content-Type': 'application/json' 
+    }, {
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: "application/json"
       }
-    })
-  });
+    });
 
   if (!response.ok) {
     throw new Error('Failed to fetch from Gemini');
@@ -89,17 +93,13 @@ export const chatWithMentor = async (apiKey: string, profile: UserProfile, histo
       { role: 'user', content: newMessage }
     ];
 
-    const response = await fetch(LONGCAT_API_URL, {
-      method: 'POST',
-      headers: {
+    const response = await proxyFetch(LONGCAT_API_URL, {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
+      }, {
         model: 'longcat-flash-chat',
         messages: messages
-      })
-    });
+      });
 
     if (!response.ok) throw new Error('Failed to fetch chat from LongCat');
     const data = await response.json();
@@ -117,14 +117,12 @@ export const chatWithMentor = async (apiKey: string, profile: UserProfile, histo
     parts: [{ text: newMessage }]
   });
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const response = await proxyFetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      'Content-Type': 'application/json'
+    }, {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: formattedHistory
-    })
-  });
+    });
 
   if (!response.ok) {
     throw new Error('Failed to fetch chat from Gemini');
@@ -158,20 +156,16 @@ export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, us
   `;
 
   if (provider === 'longcat') {
-    const response = await fetch(LONGCAT_API_URL, {
-      method: 'POST',
-      headers: {
+    const response = await proxyFetch(LONGCAT_API_URL, {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
+      }, {
         model: 'longcat-flash-chat',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ]
-      })
-    });
+      });
 
     if (!response.ok) throw new Error('Failed to fetch analysis from LongCat');
     const data = await response.json();
@@ -179,14 +173,12 @@ export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, us
   }
 
   // GEMINI FALLBACK
-  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const response = await proxyFetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      'Content-Type': 'application/json'
+    }, {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }]
-    })
-  });
+    });
 
   if (!response.ok) {
     throw new Error('Failed to analyze via Gemini');
