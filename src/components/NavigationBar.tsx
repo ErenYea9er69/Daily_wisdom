@@ -1,5 +1,6 @@
 import { Calendar, MessageCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { SettingsModal } from './SettingsModal';
 
 export function NavigationBar() {
     return (
@@ -8,13 +9,14 @@ export function NavigationBar() {
                 <ArrowLeft size={24} />
             </Link>
 
-            <div className="flex gap-6">
+            <div className="flex gap-6 items-center">
                 <Link href="/calendar" className="text-zinc-500 hover:text-white transition-colors">
                     <Calendar size={24} />
                 </Link>
                 <Link href="/chat" className="text-zinc-500 hover:text-white transition-colors">
                     <MessageCircle size={24} />
                 </Link>
+                <SettingsModal />
             </div>
         </nav>
     );
