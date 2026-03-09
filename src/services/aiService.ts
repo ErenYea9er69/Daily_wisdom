@@ -133,3 +133,65 @@ export const chatWithMentor = async (apiKey: string, profile: UserProfile, histo
   const data = await response.json();
   return data.candidates[0].content.parts[0].text;
 };
+
+export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, usageData: { appName: string, durationMinutes: number, category: string }[]): Promise<string> => {
+  const provider = useStore.getState().apiProvider;
+
+  // Format data for prompt
+  const usageString = usageData.map(d => `- ${d.appName}: ${Math.floor(d.durationMinutes / 60)}h ${d.durationMinutes % 60}m (${d.category})`).join('\n');
+
+  const systemPrompt = `
+    You are a premium, highly intellectual mentor modeling ${profile.admires}.
+    The user is named ${profile.name} and is struggling with: ${profile.struggle}.
+    Their learning style is: ${profile.focus}.
+  `;
+
+  const userPrompt = `
+    Here is my screen time data and application usage today:
+    
+    ${usageString}
+
+    Provide a brief (max 150 words), incisive analysis of how my time allocation aligns with my goal of overcoming '${profile.struggle}'. 
+    If my style is 'tough_love', be absolutely brutal about wasted time. 
+    If it is 'empathy', be understanding but constructive.
+    Do not use generic formatting, just write directly to me as a mentor evaluating my habits.
+  `;
+
+  if (provider === 'longcat') {
+    const response = await fetch(LONGCAT_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'longcat-flash-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch analysis from LongCat');
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // GEMINI FALLBACK
+  const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to analyze via Gemini');
+  }
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+};

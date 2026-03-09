@@ -1,4 +1,4 @@
-import { Calendar, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Calendar, MessageCircle, ArrowLeft, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { SettingsModal } from './SettingsModal';
 
@@ -15,6 +15,9 @@ export function NavigationBar() {
                 <div className="flex gap-6 items-center">
                     <Link href="/calendar" className="text-zinc-500 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300">
                         <Calendar size={22} className="stroke-[2.5]" />
+                    </Link>
+                    <Link href="/analytics" className="text-zinc-500 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300">
+                        <Activity size={22} className="stroke-[2.5]" />
                     </Link>
                     <Link href="/chat" className="text-zinc-500 hover:text-white hover:scale-110 active:scale-95 transition-all duration-300">
                         <MessageCircle size={22} className="stroke-[2.5]" />

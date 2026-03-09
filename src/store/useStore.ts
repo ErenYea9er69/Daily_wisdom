@@ -8,6 +8,12 @@ export type UserProfile = {
   admires: string;
 };
 
+export type AppUsage = {
+  appName: string;
+  durationMinutes: number;
+  category: 'social' | 'productivity' | 'entertainment' | 'other';
+};
+
 export type Lesson = {
   id: string;
   date: string; // YYYY-MM-DD
@@ -31,6 +37,7 @@ interface AppState {
   lessons: Lesson[];
   chatHistory: ChatMessage[];
   streakCalendar: string[]; // Array of YYYY-MM-DD dates completed
+  screenTimeData: AppUsage[]; // Mock data for now
   
   // Actions
   setApiKey: (key: string, provider: 'gemini' | 'longcat') => void;
@@ -55,6 +62,12 @@ export const useStore = create<AppState>()(
       lessons: [],
       chatHistory: [],
       streakCalendar: [],
+      screenTimeData: [
+        { appName: 'TikTok', durationMinutes: 184, category: 'social' },
+        { appName: 'Instagram', durationMinutes: 120, category: 'social' },
+        { appName: 'VS Code', durationMinutes: 45, category: 'productivity' },
+        { appName: 'YouTube', durationMinutes: 90, category: 'entertainment' },
+      ],
       isHydrated: false,
 
       setHydrated: () => set({ isHydrated: true }),
@@ -85,7 +98,13 @@ export const useStore = create<AppState>()(
         userProfile: null,
         lessons: [],
         chatHistory: [],
-        streakCalendar: []
+        streakCalendar: [],
+        screenTimeData: [
+          { appName: 'TikTok', durationMinutes: 184, category: 'social' },
+          { appName: 'Instagram', durationMinutes: 120, category: 'social' },
+          { appName: 'VS Code', durationMinutes: 45, category: 'productivity' },
+          { appName: 'YouTube', durationMinutes: 90, category: 'entertainment' },
+        ]
       }),
     }),
     {
