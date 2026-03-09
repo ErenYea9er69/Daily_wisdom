@@ -45,7 +45,7 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       }, {
-        model: 'longcat-flash-chat',
+        model: 'longcat-flash-thinking-2601',
         response_format: { type: "json_object" },
         messages: [
           {
@@ -107,7 +107,7 @@ export const chatWithMentor = async (apiKey: string, profile: UserProfile, histo
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       }, {
-        model: 'longcat-flash-chat',
+        model: 'longcat-flash-thinking-2601',
         messages: messages
       });
 
@@ -170,7 +170,7 @@ export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, us
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       }, {
-        model: 'longcat-flash-chat',
+        model: 'longcat-flash-thinking-2601',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -208,21 +208,26 @@ export const reflectOnLesson = async (apiKey: string, profile: UserProfile, less
     Insight: "${lesson.insight}"
     Action: "${lesson.action}"
 
-    The user's reaction/critique is: "${reflection}"
-
     If they are making excuses, destroy their excuses entirely. 
     If they had a genuine insight, validate it and push them harder.
     Keep it strictly under 100 words. No robotic metaphors. NO cliches. Speak like a real human.
   `;
+
+  // Build the message history based on previous reflections
+  const previousMessages = (lesson.reflections || []).map(r => ({
+    role: r.role,
+    content: r.content
+  }));
 
   if (provider === 'longcat') {
     const response = await proxyFetch(LONGCAT_API_URL, {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       }, {
-        model: 'longcat-flash-chat',
+        model: 'longcat-flash-thinking-2601',
         messages: [
           { role: 'system', content: systemPrompt },
+          ...previousMessages,
           { role: 'user', content: reflection }
         ]
       });
@@ -233,11 +238,19 @@ export const reflectOnLesson = async (apiKey: string, profile: UserProfile, less
   }
 
   // GEMINI FALLBACK
+  const geminiHistory = (lesson.reflections || []).map(r => ({
+    role: r.role === 'user' ? 'user' : 'model',
+    parts: [{ text: r.content }]
+  }));
+
   const response = await proxyFetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       'Content-Type': 'application/json'
     }, {
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: 'user', parts: [{ text: reflection }] }]
+      contents: [
+          ...geminiHistory,
+          { role: 'user', parts: [{ text: reflection }] }
+      ]
     });
 
   if (!response.ok) {

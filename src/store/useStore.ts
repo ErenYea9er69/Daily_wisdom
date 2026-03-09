@@ -21,6 +21,7 @@ export type Lesson = {
   insight: string;
   action: string;
   category: string;
+  reflections?: { role: 'user' | 'assistant'; content: string }[];
 };
 
 export type ChatMessage = {
@@ -45,6 +46,7 @@ interface AppState {
   setProfile: (profile: UserProfile) => void;
   completeOnboarding: () => void;
   addLesson: (lesson: Lesson) => void;
+  updateLessonReflections: (date: string, reflection: { role: 'user' | 'assistant'; content: string }) => void;
   markLessonDone: (date: string) => void;
   addChatMessage: (msg: ChatMessage) => void;
   clearChatHistory: () => void;
@@ -78,6 +80,15 @@ export const useStore = create<AppState>()(
       
       addLesson: (lesson) => 
         set((state) => ({ lessons: [...state.lessons, lesson] })),
+
+      updateLessonReflections: (date, reflection) =>
+        set((state) => ({
+          lessons: state.lessons.map(l => 
+            l.date === date 
+              ? { ...l, reflections: [...(l.reflections || []), reflection] }
+              : l
+          )
+        })),
         
       markLessonDone: (date) => 
         set((state) => {

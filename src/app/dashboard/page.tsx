@@ -8,7 +8,7 @@ import { NavigationBar } from '@/components/NavigationBar';
 
 export default function Dashboard() {
     const router = useRouter();
-    const { isHydrated, hasCompletedOnboarding, apiKey, userProfile, lessons, addLesson, markLessonDone, streakCalendar } = useStore();
+    const { isHydrated, hasCompletedOnboarding, apiKey, userProfile, lessons, addLesson, updateLessonReflections, markLessonDone, streakCalendar } = useStore();
 
     const [loading, setLoading] = useState(true);
     const [todayLesson, setTodayLesson] = useState<Lesson | null>(null);
@@ -80,19 +80,25 @@ export default function Dashboard() {
     const handleReflectionSubmit = async () => {
         if (!reflectionText.trim() || !apiKey || !userProfile || !todayLesson) return;
 
+        const userMessage = { role: 'user' as const, content: reflectionText.trim() };
+        updateLessonReflections(todayLesson.date, userMessage);
+
+        // Optimistically show user message, then wait for AI
+        setReflectionText('');
         setIsSubmittingReflection(true);
+
         try {
-            // dynamically import to avoid circular dep issues in some setups, or just rely on global import
             const { reflectOnLesson } = await import('@/services/aiService');
-            const response = await reflectOnLesson(apiKey, userProfile, todayLesson, reflectionText);
-            setReflectionResponse(response);
-            setReflectionText('');
+            // We pass the updated lesson context which now contains the user message via the store
+            const aiResponseText = await reflectOnLesson(apiKey, userProfile, { ...todayLesson, reflections: [...(todayLesson.reflections || []), userMessage] }, reflectionText);
+
+            updateLessonReflections(todayLesson.date, { role: 'assistant', content: aiResponseText });
+
         } catch (error) {
             console.error("Reflection Failed", error);
-            setReflectionResponse("I am currently offline. Hold that thought and try hitting me again later.");
+            updateLessonReflections(todayLesson.date, { role: 'assistant', content: "I am currently offline. Hold that thought and try hitting me again later." });
         } finally {
             setIsSubmittingReflection(false);
-            setIsReflecting(false);
         }
     };
 
@@ -174,63 +180,88 @@ export default function Dashboard() {
                         )}
 
                         {/* Interactive Feedback UI */}
-                        {!reflectionResponse ? (
-                            <div className="border-t border-white/10 pt-6 mt-auto">
-                                {!isReflecting ? (
-                                    <div className="flex gap-3 relative z-20">
-                                        <button
-                                            onClick={() => setIsReflecting(true)}
-                                            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
-                                        >
-                                            👎 Critique
-                                        </button>
-                                        <button
-                                            onClick={() => setIsReflecting(true)}
-                                            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
-                                        >
-                                            🤔 Reflect
-                                        </button>
-                                        <div className="flex-1"></div>
-                                        <button className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors border border-emerald-500/20">
-                                            🔥 Accepted
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-3 relative z-20">
-                                        <textarea
-                                            value={reflectionText}
-                                            onChange={(e) => setReflectionText(e.target.value)}
-                                            placeholder="Tell me why I'm wrong or share your thoughts..."
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 resize-none"
-                                            rows={2}
-                                            autoFocus
-                                        />
-                                        <div className="flex justify-end gap-3">
-                                            <button
-                                                onClick={() => setIsReflecting(false)}
-                                                className="px-4 py-2 text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleReflectionSubmit}
-                                                disabled={!reflectionText.trim() || isSubmittingReflection}
-                                                className="px-6 py-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-                                            >
-                                                {isSubmittingReflection ? "Thinking..." : "Send to Mentor"}
-                                            </button>
+                        <div className="border-t border-white/10 pt-6 mt-auto">
+
+                            {/* Render Chat History */}
+                            {todayLesson?.reflections && todayLesson.reflections.length > 0 && (
+                                <div className="space-y-4 mb-6">
+                                    {todayLesson.reflections.map((msg, idx) => (
+                                        <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                            <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] ${msg.role === 'user'
+                                                    ? 'bg-zinc-800 text-zinc-200 rounded-br-sm'
+                                                    : 'bg-indigo-500/10 border border-indigo-500/20 text-zinc-300 rounded-bl-sm'
+                                                }`}>
+                                                {msg.role === 'assistant' && (
+                                                    <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-1">Mentor Reply</p>
+                                                )}
+                                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                            </div>
                                         </div>
+                                    ))}
+                                    {isSubmittingReflection && (
+                                        <div className="flex flex-col items-start">
+                                            <div className="px-4 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl rounded-bl-sm">
+                                                <div className="flex gap-1.5 items-center h-4">
+                                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                                    <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Input Area */}
+                            {!isReflecting ? (
+                                <div className="flex gap-3 relative z-20">
+                                    <button
+                                        onClick={() => setIsReflecting(true)}
+                                        className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
+                                    >
+                                        👎 Critique
+                                    </button>
+                                    <button
+                                        onClick={() => setIsReflecting(true)}
+                                        className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
+                                    >
+                                        🤔 Reflect
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3 relative z-20">
+                                    <textarea
+                                        value={reflectionText}
+                                        onChange={(e) => setReflectionText(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleReflectionSubmit();
+                                            }
+                                        }}
+                                        placeholder="Tell me why I'm wrong or share your thoughts..."
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 resize-none text-sm"
+                                        rows={2}
+                                        autoFocus
+                                    />
+                                    <div className="flex justify-end gap-3">
+                                        <button
+                                            onClick={() => setIsReflecting(false)}
+                                            className="px-4 py-2 text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleReflectionSubmit}
+                                            disabled={!reflectionText.trim() || isSubmittingReflection}
+                                            className="px-6 py-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                                        >
+                                            {isSubmittingReflection ? "Thinking..." : "Send to Mentor"}
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="mt-auto border-l-2 border-indigo-500 pl-4 py-2 relative z-20">
-                                <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2">Mentor Reply</p>
-                                <p className="text-zinc-200 text-sm md:text-base leading-relaxed">
-                                    {reflectionResponse}
-                                </p>
-                            </div>
-                        )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Column 2: Context / Stats Side Panel */}
