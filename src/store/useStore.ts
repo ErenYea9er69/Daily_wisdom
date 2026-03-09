@@ -17,8 +17,9 @@ export type AppUsage = {
 export type Lesson = {
   id: string;
   date: string; // YYYY-MM-DD
-  title: string;
-  content: string;
+  quote: string;
+  insight: string;
+  action: string;
   category: string;
 };
 

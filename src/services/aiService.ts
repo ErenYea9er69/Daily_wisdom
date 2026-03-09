@@ -24,10 +24,16 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
     - Their preferred learning style/focus: ${profile.focus}
     - They admire: ${profile.admires}
     
-    Write a daily lesson (approx 150-250 words) that addresses their exact struggle using the teachings of the person they admire or related historical/philosophical concepts. 
+    You must generate today's Daily Transmission to help them.
+    
     Make the tone match their learning style (if tough_love: be direct and blunt. If empathy: be gentle and understanding. If history/philosophy: focus on facts and core theories).
     
-    Return pure JSON with exactly these two keys: "title" (a bold, catchy title), and "content" (the lesson text, formatting with line breaks if needed). Do not wrap in markdown loops, just raw valid JSON.
+    Return pure JSON with EXACTLY these three keys: 
+    1. "quote" (a powerful, inspiring, and relevant quote from ${profile.admires} or a similar figure)
+    2. "insight" (1-2 short, profound paragraphs analyzing the quote in the context of their struggle)
+    3. "action" (One specific, highly actionable micro-task they must do today to overcome their struggle)
+    
+    Do not wrap in markdown loops, just output raw valid JSON.
   `;
 
   if (provider === 'longcat') {

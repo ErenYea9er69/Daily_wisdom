@@ -43,8 +43,9 @@ export default function Dashboard() {
                     console.error("AI Gen Failed:", error);
                     setTodayLesson({
                         id: 'err', date: today, category: 'error',
-                        title: 'Connection Lost',
-                        content: 'Your mentor could not reach the servers. Please check your API key or connection.'
+                        quote: 'The obstacle in the path becomes the path. Never forget, every path is the right one.',
+                        insight: 'Your mentor could not reach the servers. Please check your API key or connection.',
+                        action: 'Verify your network connectivity and try again.'
                     });
                 } finally {
                     setLoading(false);
@@ -112,15 +113,33 @@ export default function Dashboard() {
                             </span>
                         </div>
 
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter leading-[1.1] mb-8 bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-200 to-zinc-600">
-                            {todayLesson?.title}
-                        </h2>
+                        {todayLesson?.quote && (
+                            <blockquote className="border-l-4 border-emerald-500/50 pl-6 py-2 mb-8 relative">
+                                <div className="absolute -left-3 -top-4 text-6xl text-emerald-500/20 font-serif leading-none">"</div>
+                                <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif italic font-medium tracking-tight leading-[1.3] text-transparent bg-clip-text bg-gradient-to-br from-white via-zinc-200 to-zinc-500">
+                                    {todayLesson.quote}
+                                </h2>
+                            </blockquote>
+                        )}
 
-                        <div className="prose prose-invert max-w-none relative z-10 flex-grow">
+                        <div className="prose prose-invert max-w-none relative z-10 flex-grow mb-8">
                             <p className="text-base sm:text-lg text-zinc-300 leading-relaxed font-light whitespace-pre-wrap">
-                                {todayLesson?.content}
+                                {todayLesson?.insight}
                             </p>
                         </div>
+
+                        {todayLesson?.action && (
+                            <div className="mt-auto bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group/action">
+                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 -translate-x-full group-hover/action:animate-[shimmer_2s_infinite]" />
+                                <p className="text-emerald-400 uppercase tracking-widest text-[10px] font-bold mb-2 flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    Today's Directive
+                                </p>
+                                <p className="text-white font-medium text-lg lg:text-xl">
+                                    {todayLesson.action}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Column 2: Context / Stats Side Panel */}
