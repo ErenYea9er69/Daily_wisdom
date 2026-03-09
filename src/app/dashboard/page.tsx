@@ -13,6 +13,12 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [todayLesson, setTodayLesson] = useState<Lesson | null>(null);
 
+    // Interactive Reflection State
+    const [isReflecting, setIsReflecting] = useState(false);
+    const [reflectionText, setReflectionText] = useState('');
+    const [reflectionResponse, setReflectionResponse] = useState<string | null>(null);
+    const [isSubmittingReflection, setIsSubmittingReflection] = useState(false);
+
     useEffect(() => {
         if (!isHydrated) return;
 
@@ -70,6 +76,25 @@ export default function Dashboard() {
             </div>
         );
     }
+
+    const handleReflectionSubmit = async () => {
+        if (!reflectionText.trim() || !apiKey || !userProfile || !todayLesson) return;
+
+        setIsSubmittingReflection(true);
+        try {
+            // dynamically import to avoid circular dep issues in some setups, or just rely on global import
+            const { reflectOnLesson } = await import('@/services/aiService');
+            const response = await reflectOnLesson(apiKey, userProfile, todayLesson, reflectionText);
+            setReflectionResponse(response);
+            setReflectionText('');
+        } catch (error) {
+            console.error("Reflection Failed", error);
+            setReflectionResponse("I am currently offline. Hold that thought and try hitting me again later.");
+        } finally {
+            setIsSubmittingReflection(false);
+            setIsReflecting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-black text-white selection:bg-white/20 flex flex-col items-center pb-24">
@@ -136,14 +161,73 @@ export default function Dashboard() {
                         </div>
 
                         {todayLesson?.action && (
-                            <div className="mt-auto bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group/action">
+                            <div className="mt-auto bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group/action mb-6">
                                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 -translate-x-full group-hover/action:animate-[shimmer_2s_infinite]" />
                                 <p className="text-emerald-400 uppercase tracking-widest text-[10px] font-bold mb-2 flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     Today's Directive
                                 </p>
-                                <p className="text-white font-medium text-lg lg:text-xl">
+                                <p className="text-white font-medium text-lg lg:text-xl relative z-10">
                                     {todayLesson.action}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Interactive Feedback UI */}
+                        {!reflectionResponse ? (
+                            <div className="border-t border-white/10 pt-6 mt-auto">
+                                {!isReflecting ? (
+                                    <div className="flex gap-3 relative z-20">
+                                        <button
+                                            onClick={() => setIsReflecting(true)}
+                                            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
+                                        >
+                                            👎 Critique
+                                        </button>
+                                        <button
+                                            onClick={() => setIsReflecting(true)}
+                                            className="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-lg text-sm font-medium transition-colors border border-white/5"
+                                        >
+                                            🤔 Reflect
+                                        </button>
+                                        <div className="flex-1"></div>
+                                        <button className="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg text-sm font-medium transition-colors border border-emerald-500/20">
+                                            🔥 Accepted
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-3 relative z-20">
+                                        <textarea
+                                            value={reflectionText}
+                                            onChange={(e) => setReflectionText(e.target.value)}
+                                            placeholder="Tell me why I'm wrong or share your thoughts..."
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 resize-none"
+                                            rows={2}
+                                            autoFocus
+                                        />
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                onClick={() => setIsReflecting(false)}
+                                                className="px-4 py-2 text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleReflectionSubmit}
+                                                disabled={!reflectionText.trim() || isSubmittingReflection}
+                                                className="px-6 py-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                                            >
+                                                {isSubmittingReflection ? "Thinking..." : "Send to Mentor"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="mt-auto border-l-2 border-indigo-500 pl-4 py-2 relative z-20">
+                                <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-2">Mentor Reply</p>
+                                <p className="text-zinc-200 text-sm md:text-base leading-relaxed">
+                                    {reflectionResponse}
                                 </p>
                             </div>
                         )}

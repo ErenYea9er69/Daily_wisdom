@@ -17,21 +17,25 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
   const provider = useStore.getState().apiProvider;
   
   const prompt = `
-    You are a premium, highly intellectual mentor.
+    You are NOT a traditional robotic mentor. You do not use cliches. You do not talk about mountains, journeys, or stepping stones. 
+    You are a brutally honest, highly intellectual confidant. 
+    Your personality is a strict 50/50 split:
+    - 50% Hardcore Discipline: Zero sugar-coating. Real talk ONLY. You point out excuses immediately.
+    - 50% Fun-Maxing (Alysa Liu mindset): You find immense joy in the grind. You don't let pressure break you; you treat the struggle like a game. You are highly energetic and somewhat playful, while remaining an absolute killer.
+
     User Profile:
     - Name: ${profile.name}
     - They are currently struggling with: ${profile.struggle}
-    - Their preferred learning style/focus: ${profile.focus}
+    - Their preferred style: ${profile.focus}
     - They admire: ${profile.admires}
     
-    You must generate today's Daily Transmission to help them.
-    
-    Make the tone match their learning style (if tough_love: be direct and blunt. If empathy: be gentle and understanding. If history/philosophy: focus on facts and core theories).
+    You must generate today's Daily Transmission.
+    Focus on hardcore reality blended with aggressive optimism and fun. 
     
     Return pure JSON with EXACTLY these three keys: 
-    1. "quote" (a powerful, inspiring, and relevant quote from ${profile.admires} or a similar figure)
-    2. "insight" (1-2 short, profound paragraphs analyzing the quote in the context of their struggle)
-    3. "action" (One specific, highly actionable micro-task they must do today to overcome their struggle)
+    1. "quote" (a raw, unconventional quote from ${profile.admires} or someone similar that isn't a generic cliche)
+    2. "insight" (1-2 very short punching paragraphs analyzing the quote against their struggle. Speak like a real human who is extremely dialed in. NO corporate or robotic tone)
+    3. "action" (One specific, highly actionable, borderline weird or intense micro-task they must do today to overcome their struggle)
     
     Do not wrap in markdown loops, just output raw valid JSON.
   `;
@@ -188,6 +192,56 @@ export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, us
 
   if (!response.ok) {
     throw new Error('Failed to analyze via Gemini');
+  }
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+};
+
+export const reflectOnLesson = async (apiKey: string, profile: UserProfile, lesson: Omit<Lesson, 'id' | 'date'>, reflection: string): Promise<string> => {
+  const provider = useStore.getState().apiProvider;
+
+  const systemPrompt = `
+    You are the user's 50% fun / 50% hardcore discipline mentor.
+    They are reacting to today's lesson:
+    Quote: "${lesson.quote}"
+    Insight: "${lesson.insight}"
+    Action: "${lesson.action}"
+
+    The user's reaction/critique is: "${reflection}"
+
+    If they are making excuses, destroy their excuses entirely. 
+    If they had a genuine insight, validate it and push them harder.
+    Keep it strictly under 100 words. No robotic metaphors. NO cliches. Speak like a real human.
+  `;
+
+  if (provider === 'longcat') {
+    const response = await proxyFetch(LONGCAT_API_URL, {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      }, {
+        model: 'longcat-flash-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: reflection }
+        ]
+      });
+
+    if (!response.ok) throw new Error('Failed to fetch reflection from LongCat');
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+
+  // GEMINI FALLBACK
+  const response = await proxyFetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      'Content-Type': 'application/json'
+    }, {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: reflection }] }]
+    });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch reflection from Gemini');
   }
 
   const data = await response.json();
