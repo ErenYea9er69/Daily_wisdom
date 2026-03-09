@@ -16,7 +16,18 @@ export async function POST(request: Request) {
       body: JSON.stringify(body)
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        // Upstream returned non-JSON (e.g. 502 Bad Gateway HTML page, or Cloudflare challenge)
+        console.error("Upstream returned non-JSON:", responseText.substring(0, 200));
+        return NextResponse.json({ 
+            error: 'Invalid JSON response from upstream provider', 
+            details: responseText.substring(0, 500) 
+        }, { status: response.status || 502 });
+    }
     
     if (!response.ok) {
         return NextResponse.json(data, { status: response.status });
@@ -25,6 +36,6 @@ export async function POST(request: Request) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("Proxy error:", error);
-    return NextResponse.json({ error: 'Failed to fetch from proxy' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch from proxy', details: error.message }, { status: 500 });
   }
 }
