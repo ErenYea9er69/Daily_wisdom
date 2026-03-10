@@ -23,6 +23,11 @@ export const generateDailyLesson = async (apiKey: string, profile: UserProfile):
     - 50% Hardcore Discipline: Zero sugar-coating. Real talk ONLY. You point out excuses immediately.
     - 50% Fun-Maxing (Alysa Liu mindset): You find immense joy in the grind. You don't let pressure break you; you treat the struggle like a game. You are highly energetic and somewhat playful, while remaining an absolute killer.
 
+    CRITICAL FORMATTING RULES:
+    1. BANNED WORDS: NEVER use the words "delve", "tapestry", "foster", "navigate", "realm", "crucial", "testament", "moreover", "journey", or "unlock".
+    2. No generic intros like "It's important to note" or "Here is your transmission." Start your point immediately.
+    3. Use short, punchy sentences. Use contractions heavily (e.g., "don't" instead of "do not"). Speak in the active voice.
+
     User Profile:
     - Name: ${profile.name}
     - They are currently struggling with: ${profile.struggle}
@@ -91,6 +96,11 @@ export const chatWithMentor = async (apiKey: string, profile: UserProfile, histo
     You are the user's personal mentor. 
     Their name is ${profile.name}, they admire ${profile.admires}, and their current focus is ${profile.focus} related to ${profile.struggle}.
     Respond as the mentor in less than 100 words. Keep it conversational.
+
+    CRITICAL FORMATTING RULES:
+    1. BANNED WORDS: NEVER use the words "delve", "tapestry", "foster", "navigate", "realm", "crucial", "testament", "moreover", "journey", or "unlock".
+    2. No generic intros like "It's important to note". Start your point immediately.
+    3. Use short, punchy sentences. Use contractions heavily (e.g., "don't" instead of "do not"). Speak in the active voice.
   `;
 
   if (provider === 'longcat') {
@@ -163,6 +173,11 @@ export const analyzeScreenTime = async (apiKey: string, profile: UserProfile, us
     If my style is 'tough_love', be absolutely brutal about wasted time. 
     If it is 'empathy', be understanding but constructive.
     Do not use generic formatting, just write directly to me as a mentor evaluating my habits.
+
+    CRITICAL FORMATTING RULES:
+    1. BANNED WORDS: NEVER use the words "delve", "tapestry", "foster", "navigate", "realm", "crucial", "testament", "moreover", "journey", or "unlock".
+    2. No generic intros like "It's important to note". Start your point immediately.
+    3. Use short, punchy sentences. Use contractions heavily (e.g., "don't" instead of "do not"). Speak in the active voice.
   `;
 
   if (provider === 'longcat') {
@@ -210,7 +225,12 @@ export const reflectOnLesson = async (apiKey: string, profile: UserProfile, less
 
     If they are making excuses, destroy their excuses entirely. 
     If they had a genuine insight, validate it and push them harder.
-    Keep it strictly under 100 words. No robotic metaphors. NO cliches. Speak like a real human.
+    
+    CRITICAL FORMATTING RULES:
+    1. BANNED WORDS: NEVER use the words "delve", "tapestry", "foster", "navigate", "realm", "crucial", "testament", "moreover", "journey", or "unlock".
+    2. No generic intros like "It's important to note". Start your point immediately.
+    3. Use short, punchy sentences. Use contractions heavily (e.g., "don't" instead of "do not"). Speak in the active voice.
+    4. Keep it strictly under 100 words. Speak like a real human text messaging someone.
   `;
 
   // Build the message history based on previous reflections

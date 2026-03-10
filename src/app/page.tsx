@@ -41,9 +41,11 @@ export default function Home() {
       title: 'How do you prefer to learn?', type: 'choice', field: 'focus',
       options: [
         { label: 'Tough love. Tell it to me straight.', value: 'tough_love' },
+        { label: 'Cognitive Behavioral reframing.', value: 'cbt' },
+        { label: 'Mindfulness and anxiety relief.', value: 'mindfulness' },
+        { label: 'Building micro-habits and routines.', value: 'habits' },
         { label: 'Gentle and empathetic guidance.', value: 'empathy' },
-        { label: 'Purely historical facts and stories.', value: 'history' },
-        { label: 'Deep philosophical concepts.', value: 'philosophy' },
+        { label: 'Historical facts and philosophy.', value: 'philosophy' },
       ]
     },
     { title: 'Lastly, who is a thinker you admire?', subtitle: 'This helps me shape your mentor.', type: 'input', field: 'admires', placeholder: 'E.g., Marcus Aurelius, Buddha, Tesla' }

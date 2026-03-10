@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type UserProfile = {
   name: string;
-  focus: 'tough_love' | 'empathy' | 'history' | 'philosophy';
+  focus: 'tough_love' | 'empathy' | 'history' | 'philosophy' | 'cbt' | 'mindfulness' | 'habits';
   struggle: string;
   admires: string;
 };
